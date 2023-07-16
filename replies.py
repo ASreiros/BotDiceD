@@ -74,6 +74,8 @@ def generate_help():
         "/armor": "Same as above(/armors)",
         "/conditions": "Gives a list of conditions",
         "/condition": "Same as above(/condition)",
+        "/weapons": "Gives list of weapons",
+        "weapon": "Same as above(/weapons)",
         "other": "You also can just type number of valid dices to roll and I will roll if i will understand you. For example 3d12"
     }
     for key, value in command_data.items():
