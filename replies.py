@@ -32,6 +32,10 @@ def roll_dice(values):
 def commands(processed):
     if processed == "armors" or processed == "armor":
         return requested_info.armor()
+    if processed == "condition" or processed == "conditions":
+        return requested_info.conditions()
+    if processed == "weapon" or processed == "weapons":
+        return requested_info.weapon()
 
 def get_response(message: str):
     processed: str = message.lower()
@@ -66,12 +70,14 @@ def generate_help():
         "dy": "Rolls 1 dice with y sides",
         "d": "Rolls 1d20",
         "dd": "Rolls 2d20",
+        "/armors": "Gives list of armors",
+        "/armor": "Same as above(/armors)",
+        "/conditions": "Gives a list of conditions",
+        "/condition": "Same as above(/condition)",
         "other": "You also can just type number of valid dices to roll and I will roll if i will understand you. For example 3d12"
     }
     for key, value in command_data.items():
         list_commands += f"{key}: {value} \n"
 
 
-def armor():
-    info = "Armor	Cost	Armor Class (AC)	Strength	Stealth	Weight"
 
