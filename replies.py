@@ -29,6 +29,7 @@ def roll_dice(values):
         text += f"Total is: {sum(rolls)}, Best: {max(rolls)}, worst: {min(rolls)}"
     return text
 
+
 def commands(processed):
     if processed == "armors" or processed == "armor":
         return requested_info.armor()
@@ -36,6 +37,11 @@ def commands(processed):
         return requested_info.conditions()
     if processed == "weapon" or processed == "weapons":
         return requested_info.weapon()
+    if "spells" in processed:
+        return requested_info.spells(processed)
+    elif "spell" in processed:
+        return requested_info.spell(processed)
+
 
 def get_response(message: str):
     processed: str = message.lower()

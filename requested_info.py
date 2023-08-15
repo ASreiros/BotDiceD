@@ -119,3 +119,84 @@ def conditions():
             return None
         else:
             return condition_text
+
+
+def spells(processed):
+    spell_level = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    spells_list = processed.split()
+    if len(spells_list) == 1 and spells_list[0] == "spells":
+        spells_text = generate_spells_list('', '', 1, '')
+        return spells_text
+    elif len(spells_list) == 2 and spells_list[0] == "spells" and spells_list[1] in spell_level:
+        spells_text = generate_spells_list('', spells_list[1], 1, '')
+        return spells_text
+
+
+def spell(processed):
+    spell_list = processed.split()
+    if len(spell_list) == 1 and spell_list[0] == "spell":
+        return "Please name a spell you need. For example /spell Fireball"
+    elif len(spell_list) > 1 and spell_list[0] == "spell":
+        spell_name = processed[6:].capitalize()
+        return get_spell(spell_name)
+    else:
+        return "Check def spell"
+
+def generate_spells_list(text, lvl, page, letter):
+    URL = f"https://api.open5e.com/v1/spells/?document__slug=wotc-srd&page={page}&spell_level={lvl}"
+    try:
+        response = requests.get(url=URL)
+        response.raise_for_status()
+        data = response.json()
+    except Exception as e:
+        print(e)
+        return None
+    else:
+        try:
+            spells_text = text
+            for spell in data['results']:
+                if spell['name'][0] is not letter:
+                    letter = spell['name'][0]
+                    spells_text += f'\n \n {letter} \n'
+                spells_text += f" {spell['name']}  |"
+        except Exception as e:
+            print("error:", e)
+            return None
+        else:
+            if data['next']:
+                page += 1
+                spells_text = generate_spells_list(spells_text, lvl, page, letter)
+                return spells_text
+            else:
+                return spells_text
+
+def get_spell(name):
+    SPELL_URL = f"https://api.open5e.com/v1/spells/?document__slug=wotc-srd&name={name}"
+    try:
+        response = requests.get(url=SPELL_URL)
+        response.raise_for_status()
+        data = response.json()
+    except Exception as e:
+        print(e)
+        return "Something wrong with spell"
+    else:
+        text = ""
+        if int(data.get('count', 0)) == 0:
+            return "No such spell. Please check spelling"
+        else:
+            text = ""
+            result = data.get("results", [])
+            print(data)
+            for spell_name in result:
+                text += f'{spell_name.get("name", "Noname")} '
+                text += f'({spell_name.get("spell_level", "10")} lvl) \n'
+                text += f'Components: {spell_name.get("components", "")}'
+                if spell_name.get('requires_verbal_components', False):
+                    text += f' ({spell_name.get("material", "")})'
+                text += f'\n Casting time: {spell_name.get("casting_time", "noinfo")} '
+                text += f'Ritual: {spell_name.get("ritual", "noinfo")} '
+                text += f'Duration: {spell_name.get("duration", "0")} '
+                text += f'Range: {spell_name.get("range", "0")} \n \n'
+                text += f'Description: {spell_name.get("desc", "")} \n'
+                text += f'Higher lvl: {spell_name.get("higher_level", "no info")} Page:{spell_name.get("page", "")} \n'
+            return text
