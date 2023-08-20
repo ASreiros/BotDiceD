@@ -138,7 +138,13 @@ def spell(processed):
         return "Please name a spell you need. For example /spell Fireball"
     elif len(spell_list) > 1 and spell_list[0] == "spell":
         spell_name = processed[6:].capitalize()
-        return get_spell(spell_name)
+        slug_list = spell_name.split()
+        slug = ""
+        for word in slug_list:
+            slug += f'{word.lower()}-'
+        slug = slug[:-1]
+        print("slug:", slug)
+        return get_spell(slug, top=True)
     else:
         return "Check def spell"
 
@@ -170,8 +176,8 @@ def generate_spells_list(text, lvl, page, letter):
             else:
                 return spells_text
 
-def get_spell(name):
-    SPELL_URL = f"https://api.open5e.com/v1/spells/?document__slug=wotc-srd&name={name}"
+def get_spell(name, top):
+    SPELL_URL = f"https://api.open5e.com/v1/spells/?document__slug=wotc-srd&slug={name}"
     try:
         response = requests.get(url=SPELL_URL)
         response.raise_for_status()
@@ -182,21 +188,61 @@ def get_spell(name):
     else:
         text = ""
         if int(data.get('count', 0)) == 0:
-            return "No such spell. Please check spelling"
+            if top:
+                return get_similar_spells(name=name, page=1, text='', counter=0)
+            else:
+                return ""
         else:
             text = ""
             result = data.get("results", [])
             print(data)
             for spell_name in result:
-                text += f'{spell_name.get("name", "Noname")} '
+                text += f'**{spell_name.get("name", "Noname")}** '
                 text += f'({spell_name.get("spell_level", "10")} lvl) \n'
                 text += f'Components: {spell_name.get("components", "")}'
                 if spell_name.get('requires_verbal_components', False):
                     text += f' ({spell_name.get("material", "")})'
-                text += f'\n Casting time: {spell_name.get("casting_time", "noinfo")} '
-                text += f'Ritual: {spell_name.get("ritual", "noinfo")} '
-                text += f'Duration: {spell_name.get("duration", "0")} '
+                text += f'\n Casting time: {spell_name.get("casting_time", "noinfo")}, '
+                text += f'Ritual: {spell_name.get("ritual", "noinfo")}, '
+                text += f'Duration: {spell_name.get("duration", "0")}, '
                 text += f'Range: {spell_name.get("range", "0")} \n \n'
                 text += f'Description: {spell_name.get("desc", "")} \n'
                 text += f'Higher lvl: {spell_name.get("higher_level", "no info")} Page:{spell_name.get("page", "")} \n'
             return text
+
+
+
+def get_similar_spells(name, page, text, counter):
+    URL = f"https://api.open5e.com/v1/spells/?document__slug=wotc-srd&page={page}"
+    try:
+        response = requests.get(url=URL)
+        response.raise_for_status()
+        data = response.json()
+    except Exception as e:
+        print(e)
+        return "Something went wrong"
+    else:
+        try:
+            spells_text = text
+            for spell in data['results']:
+                slug = spell.get('slug', "")
+                if name in slug:
+                    counter += 1
+                    spells_text += f"\n {get_spell(name=slug, top=False)} \n"
+                    spells_text += "-------------------------------------------------------------------------- \n"
+        except Exception as e:
+            print("error:", e)
+            return None
+        else:
+            if counter > 4:
+                spells_text += f" \n More then 5 spells found. Only first 5 shown. Please enter more precise input if your spell is not in the list. \n"
+                return spells_text
+            if data['next']:
+                page += 1
+                spells_text = get_similar_spells(name=name, page=page, text=spells_text, counter=counter)
+                return spells_text
+            else:
+                return spells_text
+
+
+

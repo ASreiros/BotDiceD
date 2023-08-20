@@ -41,6 +41,8 @@ def commands(processed):
         return requested_info.spells(processed)
     elif "spell" in processed:
         return requested_info.spell(processed)
+    if 'scrap' in processed:
+        return requested_info.scrap()
 
 
 def get_response(message: str):
